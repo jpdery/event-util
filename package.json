@@ -1,0 +1,26 @@
+{
+	"name": "event-util",
+	"description": "Utilities to create custom and pseudo events. Based on MooTools and @cpojer's Element.defineCustomEvent",
+	"version": "0.0.1",
+	"main": "lib/main.js",
+	"license": "MIT",
+	"keywords": ["event", "custom-events", "pseudo-events"],
+	"author": "Jean-Philippe Dery <jeanphilippe.dery@gmail.com>",
+	"bugs": "https://github.com/jpdery/event-util/issues",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jpdery/event-util.git"
+	},
+	"dependencies": {
+		"weakmap": "0.0.6"
+	},
+	"devDependencies": {
+		"mocha": "1.6",
+		"expect.js": "0.1",
+		"jshint": "0.9",
+		"wrapup": "0.9.12"
+	},
+	"engines": {
+		"node": "*"
+	}
+}
