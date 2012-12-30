@@ -12,7 +12,8 @@
 		"url": "https://github.com/jpdery/event-util.git"
 	},
 	"dependencies": {
-		"weakmap": "0.0.6"
+		"weakmap": "0.0.6",
+		"prime": "git://github.com/mootools/prime.git#winter-cleaning"
 	},
 	"devDependencies": {
 		"mocha": "1.6",
