@@ -12,12 +12,273 @@
 })({
     "0": function(require, module, exports, global) {
         "use scrict";
-        global.defineCustomEvent = require("1");
-        global.definePseudoEvent = require("3");
+        require("1");
+        require("9");
+        global.defineCustomEvent = require("7");
+        global.definePseudoEvent = require("a");
     },
     "1": function(require, module, exports, global) {
+        "use stricts";
+        var object = require("2");
+        var defineCustomEvent = require("7");
+        var elem = document.createElement("div");
+        var base = null;
+        var keys = {
+            WebkitAnimation: "webkitAnimationEnd",
+            MozAnimation: "animationend",
+            OAnimation: "oAnimationEnd",
+            msAnimation: "MSAnimationEnd",
+            animation: "animationend"
+        };
+        object.each(keys, function(val, key) {
+            if (key in elem.style) base = val;
+        });
+        var onDispatch = function(custom, e) {
+            custom.animationName = e.animationName;
+            custom.elapsedTime = e.elapsedTime;
+        };
+        defineCustomEvent("transitionend", {
+            base: base,
+            condition: function() {
+                return true;
+            },
+            onDispatch: onDispatch
+        });
+        defineCustomEvent("ownanimationend", {
+            base: "animation",
+            condition: function(e) {
+                return e.target === this;
+            }
+        });
+    },
+    "2": function(require, module, exports, global) {
         "use strict";
-        var storage = require("2").createStorage();
+        var prime = require("3"), object = require("4");
+        object.implement({
+            set: function(key, value) {
+                this[key] = value;
+                return this;
+            },
+            get: function(key) {
+                var value = this[key];
+                return value != null ? value : null;
+            },
+            count: function() {
+                var length = 0;
+                prime.each(this, function() {
+                    length++;
+                });
+                return length;
+            },
+            each: function(method, context) {
+                return prime.each(this, method, context);
+            },
+            map: function(method, context) {
+                var results = {};
+                prime.each(this, function(value, key, self) {
+                    results[key] = method.call(context, value, key, self);
+                });
+                return results;
+            },
+            filter: function(method, context) {
+                var results = {};
+                prime.each(this, function(value, key, self) {
+                    if (method.call(context, value, key, self)) results[key] = value;
+                });
+                return results;
+            },
+            every: function(method, context) {
+                var every = true;
+                prime.each(this, function(value, key, self) {
+                    if (!method.call(context, value, key, self)) return every = false;
+                });
+                return every;
+            },
+            some: function(method, context) {
+                var some = false;
+                prime.each(this, function(value, key, self) {
+                    if (!some && method.call(context, value, key, self)) return !(some = true);
+                });
+                return some;
+            },
+            index: function(value) {
+                var key = null;
+                prime.each(this, function(match, k) {
+                    if (value === match) {
+                        key = k;
+                        return false;
+                    }
+                });
+                return key;
+            },
+            remove: function(key) {
+                var value = this[key];
+                delete this[key];
+                return value;
+            },
+            keys: function() {
+                var keys = [];
+                prime.each(this, function(value, key) {
+                    keys.push(key);
+                });
+                return keys;
+            },
+            values: function() {
+                var values = [];
+                prime.each(this, function(value, key) {
+                    values.push(value);
+                });
+                return values;
+            }
+        });
+        object.each = prime.each;
+        if (typeof JSON !== "undefined") object.implement({
+            encode: function() {
+                return JSON.stringify(this);
+            }
+        });
+        module.exports = object;
+    },
+    "3": function(require, module, exports, global) {
+        "use strict";
+        var has = function(self, key) {
+            return Object.hasOwnProperty.call(self, key);
+        };
+        var each = function(object, method, context) {
+            for (var key in object) if (method.call(context, object[key], key, object) === false) break;
+            return object;
+        };
+        if (!{
+            valueOf: 0
+        }.propertyIsEnumerable("valueOf")) {
+            var buggy = "constructor,toString,valueOf,hasOwnProperty,isPrototypeOf,propertyIsEnumerable,toLocaleString".split(",");
+            var proto = Object.prototype;
+            each = function(object, method, context) {
+                for (var key in object) if (method.call(context, object[key], key, object) === false) return object;
+                for (var i = 0; key = buggy[i]; i++) {
+                    var value = object[key];
+                    if (value !== proto[key] && method.call(context, value, key, object) === false) break;
+                }
+                return object;
+            };
+        }
+        var create = Object.create || function(self) {
+            var constructor = function() {};
+            constructor.prototype = self;
+            return new constructor;
+        };
+        var define = Object.defineProperty || function(object, key, descriptor) {
+            object[key] = descriptor.value;
+            return object;
+        };
+        var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor || function(object, key) {
+            return {
+                value: object[key]
+            };
+        };
+        var implement = function(proto) {
+            each(proto, function(value, key) {
+                if (key !== "constructor" && key !== "define" && key !== "inherits") this.define(key, getOwnPropertyDescriptor(proto, key) || {
+                    writable: true,
+                    enumerable: true,
+                    configurable: true,
+                    value: value
+                });
+            }, this);
+            return this;
+        };
+        var prime = function(proto) {
+            var superprime = proto.inherits;
+            var constructor = has(proto, "constructor") ? proto.constructor : superprime ? function() {
+                return superprime.apply(this, arguments);
+            } : function() {};
+            if (superprime) {
+                var superproto = superprime.prototype;
+                var cproto = constructor.prototype = create(superproto);
+                constructor.parent = superproto;
+                cproto.constructor = constructor;
+            }
+            constructor.define = proto.define || superprime && superprime.define || function(key, descriptor) {
+                define(this.prototype, key, descriptor);
+                return this;
+            };
+            constructor.implement = implement;
+            return constructor.implement(proto);
+        };
+        prime.has = has;
+        prime.each = each;
+        prime.create = create;
+        prime.define = define;
+        module.exports = prime;
+    },
+    "4": function(require, module, exports, global) {
+        "use strict";
+        var object = require("5")["object"];
+        var names = "hasOwnProperty,isPrototypeOf,propertyIsEnumerable,toLocaleString,toString,valueOf".split(",");
+        for (var methods = {}, i = 0, name, method; name = names[i++]; ) if (method = Object.prototype[name]) methods[name] = method;
+        module.exports = object.implement(methods);
+    },
+    "5": function(require, module, exports, global) {
+        "use strict";
+        var prime = require("3"), type = require("6");
+        var slice = Array.prototype.slice;
+        var ghost = prime({
+            constructor: function ghost(self) {
+                this.valueOf = function() {
+                    return self;
+                };
+                this.toString = function() {
+                    return self + "";
+                };
+                this.is = function(object) {
+                    return self === object;
+                };
+            }
+        });
+        var shell = function(self) {
+            if (self == null || self instanceof ghost) return self;
+            var g = shell[type(self)];
+            return g ? new g(self) : self;
+        };
+        var register = function() {
+            var g = prime({
+                inherits: ghost
+            });
+            return prime({
+                constructor: function(self) {
+                    return new g(self);
+                },
+                define: function(key, descriptor) {
+                    var method = descriptor.value;
+                    this[key] = function(self) {
+                        return arguments.length > 1 ? method.apply(self, slice.call(arguments, 1)) : method.call(self);
+                    };
+                    g.prototype[key] = function() {
+                        return shell(method.apply(this.valueOf(), arguments));
+                    };
+                    prime.define(this.prototype, key, descriptor);
+                    return this;
+                }
+            });
+        };
+        for (var types = "string,number,array,object,date,function,regexp".split(","), i = types.length; i--; ) shell[types[i]] = register();
+        module.exports = shell;
+    },
+    "6": function(require, module, exports, global) {
+        "use strict";
+        var toString = Object.prototype.toString, types = /number|object|array|string|function|date|regexp|boolean/;
+        var type = function(object) {
+            if (object == null) return "null";
+            var string = toString.call(object).slice(8, -1).toLowerCase();
+            if (string === "number" && isNaN(object)) return "null";
+            if (types.test(string)) return string;
+            return "object";
+        };
+        module.exports = type;
+    },
+    "7": function(require, module, exports, global) {
+        "use strict";
+        var storage = require("8").createStorage();
         var add = Element.prototype.addEventListener;
         var remove = Element.prototype.removeEventListener;
         var events = {};
@@ -37,6 +298,7 @@
                     while (base.base) base = base.base;
                 }
                 if (base) {
+                    if (base === type) throw new Error("A custom event cannot redefine a native event");
                     if (descriptor.onAdd) {
                         descriptor.onAdd.call(this);
                     }
@@ -90,34 +352,37 @@
             event.cancelable = "cancelable" in event ? event.cancelable : true;
             event.condition = "condition" in event ? event.condition : true;
             event.onCreate = event.onCreate || function() {
-                var event = document.createEvent("CustomEvent");
-                event.initCustomEvent(name, event.bubbleable, event.cancelable);
-                return event;
+                var custom = document.createEvent("CustomEvent");
+                custom.initCustomEvent(name, event.bubbleable, event.cancelable);
+                return custom;
             };
             var base = events[event.base];
-            if (base) {
-                event.condition = function(e) {
+            events[name] = base ? {
+                base: base,
+                bubbleable: event.bubbleable,
+                cancelable: event.cancelable,
+                onCreate: event.onCreate,
+                condition: function(e) {
                     return (!base.condition || base.condition.call(this, e, name)) && (!event.condition || event.condition.call(this, e, name));
-                };
-                event.onAdd = function() {
+                },
+                onAdd: function() {
                     if (base.onAdd) base.onAdd.call(this);
                     if (event.onAdd) event.onAdd.call(this);
-                };
-                event.onRemove = function() {
+                },
+                onRemove: function() {
                     if (base.onRemove) base.onRemove.call(this);
                     if (event.onRemove) event.onRemove.call(this);
-                };
-                event.onDispatch = function() {
-                    if (base.onDispatch) base.onDispatch.call(this);
-                    if (event.onDispatch) event.onDispatch.call(this);
-                };
-            }
-            events[name] = event;
+                },
+                onDispatch: function(custom, e) {
+                    if (base.onDispatch) base.onDispatch.call(this, custom, e);
+                    if (event.onDispatch) event.onDispatch.call(this, custom, e);
+                }
+            } : event;
             return this;
         };
         module.exports = defineCustomEvent;
     },
-    "2": function(require, module, exports, global) {
+    "8": function(require, module, exports, global) {
         void function(global, undefined_, undefined) {
             var getProps = Object.getOwnPropertyNames, defProp = Object.defineProperty, toSource = Function.prototype.toString, create = Object.create, hasOwn = Object.prototype.hasOwnProperty, funcName = /^\n?function\s?(\w*)?_?\(/;
             function define(object, key, value) {
@@ -283,9 +548,42 @@
             if (global.WeakMap) global.WeakMap.createStorage = createStorage;
         }((0, eval)("this"));
     },
-    "3": function(require, module, exports, global) {
+    "9": function(require, module, exports, global) {
+        "use stricts";
+        var object = require("2");
+        var defineCustomEvent = require("7");
+        var elem = document.createElement("div");
+        var base = null;
+        var keys = {
+            WebkitTransition: "webkitTransitionEnd",
+            MozTransition: "transitionend",
+            OTransition: "oTransitionEnd",
+            msTransition: "MSTransitionEnd",
+            transition: "transitionend"
+        };
+        object.each(keys, function(val, key) {
+            if (key in elem.style) base = val;
+        });
+        var onDispatch = function(custom, e) {
+            custom.propertyName = e.propertyName;
+            custom.elapsedTime = e.elapsedTime;
+            custom.pseudoElement = e.pseudoElement;
+        };
+        defineCustomEvent("transitionend", {
+            base: base,
+            condition: function() {
+                return true;
+            },
+            onDispatch: onDispatch
+        });
+        defineCustomEvent("owntransitionend", {
+            base: "transitionend",
+            condition: function(e) {
+                return e.target === this;
+            }
+        });
+    },
+    a: function(require, module, exports, global) {
         "use scrict";
-        console.log("WAT");
-        module.exports = function() {};
     }
 });
