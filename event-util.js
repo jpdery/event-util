@@ -362,12 +362,12 @@
             custom.animationName = data.animationName;
             custom.elapsedTime = data.elapsedTime;
         };
-        defineCustomEvent("transitionend", {
+        defineCustomEvent("animationend", {
             base: base,
             onDispatch: onDispatch
         });
         defineCustomEvent("ownanimationend", {
-            base: "animation",
+            base: "animationend",
             condition: function(e) {
                 return e.target === this;
             }
