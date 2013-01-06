@@ -1,8 +1,8 @@
 {
 	"name": "event-util",
-	"description": "Utilities to create custom events. Based on MooTools and @cpojer's Element.defineCustomEvent",
+	"description": "Utilities to create custom events. Inspired by @cpojer's Element.defineCustomEvent",
 	"version": "0.0.1",
-	"main": "lib/main.js",
+	"main": "lib/index.js",
 	"license": "MIT",
 	"keywords": ["event", "custom-events", "pseudo-events"],
 	"author": "Jean-Philippe Dery <jeanphilippe.dery@gmail.com>",
@@ -16,7 +16,7 @@
 	},
 	"devDependencies": {
 		"mocha": "1.6",
-		"expect.js": "0.1",
+		"expect.js": "0.1"
 	},
 	"engines": {
 		"node": "*"

@@ -13,42 +13,12 @@
     "0": function(require, module, exports, global) {
         "use strict";
         require("1");
+        require("3");
         require("4");
-        require("2");
     },
     "1": function(require, module, exports, global) {
         "use strict";
-        var defineCustomEvent = require("2");
-        var elem = document.createElement("div");
-        var base = null;
-        var keys = {
-            WebkitAnimation: "webkitAnimationEnd",
-            MozAnimation: "animationend",
-            OAnimation: "oAnimationEnd",
-            msAnimation: "MSAnimationEnd",
-            animation: "animationend"
-        };
-        for (var key in keys) {
-            if (key in elem.style) base = keys[key];
-        }
-        var onDispatch = function(custom, data) {
-            custom.animationName = data.animationName;
-            custom.elapsedTime = data.elapsedTime;
-        };
-        defineCustomEvent("transitionend", {
-            base: base,
-            onDispatch: onDispatch
-        });
-        defineCustomEvent("ownanimationend", {
-            base: "animation",
-            condition: function(e) {
-                return e.target === this;
-            }
-        });
-    },
-    "2": function(require, module, exports, global) {
-        "use strict";
-        var storage = require("3").createStorage();
+        var storage = require("2").createStorage();
         var customs = {};
         var dispatchEvent = Element.prototype.dispatchEvent;
         var addEventListener = Element.prototype.addEventListener;
@@ -173,7 +143,7 @@
         };
         module.exports = global.defineCustomEvent = defineCustomEvent;
     },
-    "3": function(require, module, exports, global) {
+    "2": function(require, module, exports, global) {
         void function(global, undefined_, undefined) {
             var getProps = Object.getOwnPropertyNames, defProp = Object.defineProperty, toSource = Function.prototype.toString, create = Object.create, hasOwn = Object.prototype.hasOwnProperty, funcName = /^\n?function\s?(\w*)?_?\(/;
             function define(object, key, value) {
@@ -339,9 +309,9 @@
             if (global.WeakMap) global.WeakMap.createStorage = createStorage;
         }((0, eval)("this"));
     },
-    "4": function(require, module, exports, global) {
+    "3": function(require, module, exports, global) {
         "use strict";
-        var defineCustomEvent = require("2");
+        var defineCustomEvent = require("1");
         var elem = document.createElement("div");
         var base = null;
         var keys = {
@@ -365,6 +335,36 @@
         });
         defineCustomEvent("owntransitionend", {
             base: "transitionend",
+            condition: function(e) {
+                return e.target === this;
+            }
+        });
+    },
+    "4": function(require, module, exports, global) {
+        "use strict";
+        var defineCustomEvent = require("1");
+        var elem = document.createElement("div");
+        var base = null;
+        var keys = {
+            WebkitAnimation: "webkitAnimationEnd",
+            MozAnimation: "animationend",
+            OAnimation: "oAnimationEnd",
+            msAnimation: "MSAnimationEnd",
+            animation: "animationend"
+        };
+        for (var key in keys) {
+            if (key in elem.style) base = keys[key];
+        }
+        var onDispatch = function(custom, data) {
+            custom.animationName = data.animationName;
+            custom.elapsedTime = data.elapsedTime;
+        };
+        defineCustomEvent("transitionend", {
+            base: base,
+            onDispatch: onDispatch
+        });
+        defineCustomEvent("ownanimationend", {
+            base: "animation",
             condition: function(e) {
                 return e.target === this;
             }
