@@ -63,11 +63,14 @@
             custom.onRemove = custom.onRemove || function() {};
             custom.onDispatch = custom.onDispatch || function() {};
             var base = customs[custom.base];
+            var condition = function(e) {
+                return passes(base.condition, this, e) && passes(custom.condition, this, e);
+            };
             customs[name] = base ? {
                 base: base.base,
-                condition: custom.condition,
                 bubbleable: custom.bubbleable,
                 cancelable: custom.cancelable,
+                condition: condition,
                 onAdd: inherit(custom, base, "onAdd"),
                 onRemove: inherit(custom, base, "onRemove"),
                 onDispatch: inherit(custom, base, "onDispatch")
@@ -86,13 +89,8 @@
             if (parent) return root(parent);
             return base;
         };
-        var passes = function(element, custom, e) {
-            var condition = custom.condition;
-            var succeeded = condition;
-            if (typeof condition === "function") succeeded = condition.call(element, e);
-            var base = customs[custom.base];
-            if (base) return succeeded && passes(element, base, e);
-            return succeeded;
+        var passes = function(condition, element, e) {
+            return typeof condition === "function" ? condition.call(element, e) : condition;
         };
         var handler = function(element, type, listener) {
             var events = storage(element);
@@ -127,7 +125,7 @@
             var event = handler(element, type, listener);
             if (event.dispatch === null) {
                 event.dispatch = function(e) {
-                    if (passes(element, customs[type], e)) element.dispatchEvent(type, e);
+                    if (passes(customs[type].condition, element, e)) element.dispatchEvent(type, e);
                 };
             }
             return event.dispatch;
