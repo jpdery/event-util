@@ -26,10 +26,12 @@
         Element.prototype.dispatchEvent = function(event, data) {
             var custom = customs[event];
             if (custom) {
+                data = data || {};
+                if (fail(custom.condition, this, data)) return;
                 var name = event;
                 event = document.createEvent("CustomEvent");
                 event.initCustomEvent(name, custom.bubbleable, custom.cancelable);
-                custom.onDispatch.call(this, event, data || {});
+                custom.onDispatch.call(this, event, data);
             }
             return dispatchEvent.call(this, event);
         };
@@ -64,7 +66,7 @@
             custom.onDispatch = custom.onDispatch || function() {};
             var base = customs[custom.base];
             var condition = function(e) {
-                return passes(base.condition, this, e) && passes(custom.condition, this, e);
+                return pass(base.condition, this, e) && pass(custom.condition, this, e);
             };
             customs[name] = base ? {
                 base: base.base,
@@ -89,8 +91,11 @@
             if (parent) return root(parent);
             return base;
         };
-        var passes = function(condition, element, e) {
+        var pass = function(condition, element, e) {
             return typeof condition === "function" ? condition.call(element, e) : condition;
+        };
+        var fail = function(condition, element, e) {
+            return !pass(condition, element, e);
         };
         var handler = function(element, type, listener) {
             var events = storage(element);
@@ -125,7 +130,7 @@
             var event = handler(element, type, listener);
             if (event.dispatch === null) {
                 event.dispatch = function(e) {
-                    if (passes(customs[type].condition, element, e)) element.dispatchEvent(type, e);
+                    element.dispatchEvent(type, e);
                 };
             }
             return event.dispatch;
